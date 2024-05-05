@@ -1,4 +1,4 @@
-package com.bank.onboarding.interventionsservice;
+package com.bank.onboarding.interventionservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
