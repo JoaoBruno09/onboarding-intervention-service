@@ -1,7 +1,7 @@
 package com.bank.onboarding.interventionservice.controllers;
 
 import com.bank.onboarding.commonslib.persistence.models.Intervention;
-import com.bank.onboarding.commonslib.persistence.services.InterventionService;
+import com.bank.onboarding.commonslib.persistence.services.InterventionRepoService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,10 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 public class InterventionController {
 
-    private final InterventionService interventionService;
+    private final InterventionRepoService interventionRepoService;
 
     @GetMapping("/test")
     public List<Intervention> getInterventions() {
-        return interventionService.getAllInterventions();
+        return interventionRepoService.getAllInterventions();
     }
 }
