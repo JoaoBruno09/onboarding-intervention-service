@@ -51,6 +51,16 @@
 			<artifactId>persistence</artifactId>
 			<version>${commons-lib-version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.bank.onboarding.commonslib</groupId>
+			<artifactId>web</artifactId>
+			<version>${commons-lib-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.bank.onboarding.commonslib</groupId>
+			<artifactId>utils</artifactId>
+			<version>${commons-lib-version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.projectlombok</groupId>
