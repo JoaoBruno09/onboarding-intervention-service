@@ -1,4 +1,4 @@
-package com.bank.onboarding.interventionservice.services;
+package com.bank.onboarding.interventionservice.services.impl;
 
 import com.bank.onboarding.commonslib.persistence.exceptions.OnboardingException;
 import com.bank.onboarding.commonslib.persistence.models.Intervention;
@@ -8,6 +8,7 @@ import com.bank.onboarding.commonslib.utils.OnboardingUtils;
 import com.bank.onboarding.commonslib.utils.kafka.CreateAccountEvent;
 import com.bank.onboarding.commonslib.utils.mappers.AccountMapper;
 import com.bank.onboarding.commonslib.web.dtos.account.CreateAccountRequestDTO;
+import com.bank.onboarding.interventionservice.services.InterventionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ import static com.bank.onboarding.commonslib.persistence.constants.OnboardingCon
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class InterventionServiceImpl implements InterventionService{
+public class InterventionServiceImpl implements InterventionService {
 
     private final InterventionRepoService interventionRepoService;
     private final AccountRefRepoService accountRefRepoService;
