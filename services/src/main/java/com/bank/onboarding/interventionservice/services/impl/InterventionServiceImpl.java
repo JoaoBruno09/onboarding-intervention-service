@@ -83,7 +83,7 @@ public class InterventionServiceImpl implements InterventionService {
 
     @Override
     public void addCustomerIntervention(CreateIntervenientEvent createIntervenientEvent, String operationType) {
-        String interventionType = Optional.ofNullable(createIntervenientEvent.getCreateIntervenientDTO()).map(CreateIntervenientDTO::getIntervenientRequestDTO)
+        String interventionType = Optional.ofNullable(createIntervenientEvent.getCreateIntervenientDTO()).map(CreateIntervenientDTO::getIntervenient)
                 .map(IntervenientRequestDTO::getCustomerType).orElse("");
 
         saveIntervention(interventionType,
