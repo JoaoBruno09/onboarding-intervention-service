@@ -13,7 +13,7 @@ import com.bank.onboarding.commonslib.web.dtos.account.AccountRefDTO;
 import com.bank.onboarding.commonslib.web.dtos.account.CreateAccountRequestDTO;
 import com.bank.onboarding.commonslib.web.dtos.customer.CreateIntervenientDTO;
 import com.bank.onboarding.commonslib.web.dtos.customer.CustomerRefDTO;
-import com.bank.onboarding.commonslib.web.dtos.customer.IntervenientRequestDTO;
+import com.bank.onboarding.commonslib.web.dtos.customer.CustomerRequestDTO;
 import com.bank.onboarding.interventionservice.services.InterventionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ public class InterventionServiceImpl implements InterventionService {
 
     @Override
     public void createInterventionForCreateAccountOperation(CreateAccountEvent createAccountEvent, String operationType) {
-        String interventionType = Optional.ofNullable(createAccountEvent.getCreateAccountRequestDTO()).map(CreateAccountRequestDTO::getCustomerIntervenient).map(IntervenientRequestDTO::getCustomerInterventionType).orElse("");
+        String interventionType = Optional.ofNullable(createAccountEvent.getCreateAccountRequestDTO()).map(CreateAccountRequestDTO::getCustomerIntervenient).map(CustomerRequestDTO::getCustomerInterventionType).orElse("");
         saveIntervention(interventionType, createAccountEvent.getAccountRefDTO(), createAccountEvent.getCustomerRefDTO(), operationType);
         accountRefRepoService.saveAccountRefDB(AccountMapper.INSTANCE.toAccountRef(createAccountEvent.getAccountRefDTO()));
     }
@@ -84,7 +84,7 @@ public class InterventionServiceImpl implements InterventionService {
     @Override
     public void addCustomerIntervention(CreateIntervenientEvent createIntervenientEvent, String operationType) {
         String interventionType = Optional.ofNullable(createIntervenientEvent.getCreateIntervenientDTO()).map(CreateIntervenientDTO::getIntervenient)
-                .map(IntervenientRequestDTO::getCustomerType).orElse("");
+                .map(CustomerRequestDTO::getCustomerType).orElse("");
 
         saveIntervention(interventionType,
                 createIntervenientEvent.getAccountRefDTO(), createIntervenientEvent.getCustomerRefDTO(), operationType);
