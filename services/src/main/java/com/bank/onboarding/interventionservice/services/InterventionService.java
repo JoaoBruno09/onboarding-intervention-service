@@ -9,4 +9,5 @@ public interface InterventionService {
     void createInterventionForCreateAccountOperation(CreateAccountEvent createAccountEvent, String operationType);
     void handleErrorEvent(ErrorEvent errorEvent);
     void addCustomerIntervention(CreateIntervenientEvent createIntervenientEvent, String operationType);
+    void deleteIntervention(String interventionId);
 }

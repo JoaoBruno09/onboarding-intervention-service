@@ -3,12 +3,14 @@ package com.bank.onboarding.interventionservice.services.impl;
 import com.bank.onboarding.commonslib.persistence.exceptions.OnboardingException;
 import com.bank.onboarding.commonslib.persistence.models.Intervention;
 import com.bank.onboarding.commonslib.persistence.services.AccountRefRepoService;
+import com.bank.onboarding.commonslib.persistence.services.CustomerRefRepoService;
 import com.bank.onboarding.commonslib.persistence.services.InterventionRepoService;
 import com.bank.onboarding.commonslib.utils.OnboardingUtils;
 import com.bank.onboarding.commonslib.utils.kafka.models.CreateAccountEvent;
 import com.bank.onboarding.commonslib.utils.kafka.models.CreateIntervenientEvent;
 import com.bank.onboarding.commonslib.utils.kafka.models.ErrorEvent;
 import com.bank.onboarding.commonslib.utils.mappers.AccountMapper;
+import com.bank.onboarding.commonslib.utils.mappers.CustomerMapper;
 import com.bank.onboarding.commonslib.web.dtos.account.AccountRefDTO;
 import com.bank.onboarding.commonslib.web.dtos.account.CreateAccountRequestDTO;
 import com.bank.onboarding.commonslib.web.dtos.customer.CreateIntervenientDTO;
@@ -26,6 +28,7 @@ import java.util.Optional;
 import static com.bank.onboarding.commonslib.persistence.constants.OnboardingConstants.INTERVENTIONS_TYPES;
 import static com.bank.onboarding.commonslib.persistence.enums.OperationType.ADD_INTERVENIENT;
 import static com.bank.onboarding.commonslib.persistence.enums.OperationType.CREATE_ACCOUNT;
+import static com.bank.onboarding.commonslib.persistence.enums.OperationType.DELETE_INTERVENIENT;
 
 @Slf4j
 @Service
@@ -34,6 +37,7 @@ public class InterventionServiceImpl implements InterventionService {
 
     private final InterventionRepoService interventionRepoService;
     private final AccountRefRepoService accountRefRepoService;
+    private final CustomerRefRepoService customerRefRepoService;
     private final OnboardingUtils onboardingUtils;
 
     @Value("${spring.kafka.producer.customer.topic-name}")
@@ -52,25 +56,8 @@ public class InterventionServiceImpl implements InterventionService {
     public void createInterventionForCreateAccountOperation(CreateAccountEvent createAccountEvent, String operationType) {
         String interventionType = Optional.ofNullable(createAccountEvent.getCreateAccountRequestDTO())
                 .map(CreateAccountRequestDTO::getCustomerIntervenient).map(CustomerRequestDTO::getCustomerInterventionType).orElse("");
-        saveIntervention(interventionType, createAccountEvent.getAccountRefDTO(), createAccountEvent.getCustomerRefDTO(), operationType, true, 0);
+        saveIntervention(interventionType, createAccountEvent.getAccountRefDTO(), createAccountEvent.getCustomerRefDTO(), operationType, true);
         accountRefRepoService.saveAccountRefDB(AccountMapper.INSTANCE.toAccountRef(createAccountEvent.getAccountRefDTO()));
-    }
-
-    private void saveIntervention(String interventionType, AccountRefDTO accountRefDTO, CustomerRefDTO customerRefDTO, String operationType, boolean isNewCustomer, int interventionsSize) {
-        if(!INTERVENTIONS_TYPES.contains(interventionType)){
-            sendEventErrors(accountRefDTO, customerRefDTO, operationType, isNewCustomer, interventionsSize);
-            throw new OnboardingException("O tipo de intervenção introduzido é inválido");
-        }
-
-        interventionRepoService.saveInterventionDB(Intervention.builder()
-                .creationTime(LocalDateTime.now())
-                .description(onboardingUtils.getInterventionTypeValue(interventionType))
-                .lastUpdateTime(LocalDateTime.now())
-                .interventionType(interventionType)
-                .accountId(accountRefDTO.getAccountId())
-                .customerId(customerRefDTO.getCustomerId())
-                .build());
-
     }
 
     @Override
@@ -87,13 +74,43 @@ public class InterventionServiceImpl implements InterventionService {
         String interventionType = Optional.ofNullable(createIntervenientEvent.getCreateIntervenientDTO()).map(CreateIntervenientDTO::getIntervenient)
                 .map(CustomerRequestDTO::getCustomerType).orElse("");
 
-        int interventionsSize = interventionRepoService.getAllInterventionsByCustomerId(createIntervenientEvent.getCustomerRefDTO().getCustomerId()).size();
-
         saveIntervention(interventionType, createIntervenientEvent.getAccountRefDTO(),
-                createIntervenientEvent.getCustomerRefDTO(), operationType, createIntervenientEvent.isNewCustomer(), interventionsSize);
+                createIntervenientEvent.getCustomerRefDTO(), operationType, createIntervenientEvent.isNewCustomer());
     }
 
-    private void sendEventErrors(AccountRefDTO accountRefDTO, CustomerRefDTO customerRefDTO, String operationType, boolean isNewCustomer, int interventionsSize) {
+    @Override
+    public void deleteIntervention(String interventionId) {
+        Intervention intervention = interventionRepoService.getInterventionByInterventionId(interventionId);
+        interventionRepoService.deleteIntervention(intervention);
+        String customerId = intervention.getCustomerId();
+
+        CustomerRefDTO customerRefDTO = CustomerMapper.INSTANCE.toCustomerRefDTO(customerRefRepoService.findCustomerRefByCustomerId(customerId));
+
+        if(getInterventionsSizeForCustomer(customerId) == 0) onboardingUtils.sendErrorEvent(customerTopicName, null, customerRefDTO, DELETE_INTERVENIENT);
+    }
+
+    private int getInterventionsSizeForCustomer(String customerId) {
+        return interventionRepoService.getAllInterventionsByCustomerId(customerId).size();
+    }
+
+    private void saveIntervention(String interventionType, AccountRefDTO accountRefDTO, CustomerRefDTO customerRefDTO, String operationType, boolean isNewCustomer) {
+        if(!INTERVENTIONS_TYPES.contains(interventionType)){
+            sendEventErrors(accountRefDTO, customerRefDTO, operationType, isNewCustomer);
+            throw new OnboardingException("O tipo de intervenção introduzido é inválido");
+        }
+
+        interventionRepoService.saveInterventionDB(Intervention.builder()
+                .creationTime(LocalDateTime.now())
+                .description(onboardingUtils.getInterventionTypeValue(interventionType))
+                .lastUpdateTime(LocalDateTime.now())
+                .interventionType(interventionType)
+                .accountId(accountRefDTO.getAccountId())
+                .customerId(customerRefDTO.getCustomerId())
+                .build());
+
+    }
+
+    private void sendEventErrors(AccountRefDTO accountRefDTO, CustomerRefDTO customerRefDTO, String operationType, boolean isNewCustomer) {
         if(CREATE_ACCOUNT.name().equals(operationType)){
             onboardingUtils.sendErrorEvent(customerTopicName, accountRefDTO, customerRefDTO, CREATE_ACCOUNT);
             onboardingUtils.sendErrorEvent(accountTopicName, accountRefDTO, customerRefDTO, CREATE_ACCOUNT);
@@ -108,7 +125,8 @@ public class InterventionServiceImpl implements InterventionService {
                 onboardingUtils.sendErrorEvent(documentTopicName, accountRefDTO, customerRefDTO, ADD_INTERVENIENT, true);
                 onboardingUtils.sendErrorEvent(relationTopicName, accountRefDTO, customerRefDTO, ADD_INTERVENIENT, true);
             }
-            if (interventionsSize == 0) onboardingUtils.sendErrorEvent(customerTopicName, accountRefDTO, customerRefDTO, ADD_INTERVENIENT, isNewCustomer);
+            if (getInterventionsSizeForCustomer(customerRefDTO.getCustomerId()) == 0)
+                onboardingUtils.sendErrorEvent(customerTopicName, accountRefDTO, customerRefDTO, ADD_INTERVENIENT, isNewCustomer);
         }
     }
 }
