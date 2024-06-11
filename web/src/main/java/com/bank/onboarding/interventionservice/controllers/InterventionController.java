@@ -1,7 +1,9 @@
 package com.bank.onboarding.interventionservice.controllers;
 
 import com.bank.onboarding.commonslib.persistence.exceptions.OnboardingException;
+import com.bank.onboarding.commonslib.utils.OnboardingUtils;
 import com.bank.onboarding.interventionservice.services.InterventionService;
+import feign.Request;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InterventionController {
 
     private final InterventionService interventionService;
+    private final OnboardingUtils onboardingUtils;
 
     @DeleteMapping("/{interventionId}")
     public ResponseEntity<?> deleteIntervention(@PathVariable("interventionId") String interventionId){
@@ -24,7 +27,7 @@ public class InterventionController {
             return new ResponseEntity<>(HttpStatus.OK);
         }
         catch(OnboardingException e ) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return onboardingUtils.buildResponseEntity(Request.HttpMethod.DELETE.name(), e.getMessage());
         }
     }
 
