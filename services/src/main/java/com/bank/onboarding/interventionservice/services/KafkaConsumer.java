@@ -1,11 +1,9 @@
 package com.bank.onboarding.interventionservice.services;
 
-import com.bank.onboarding.commonslib.persistence.services.AccountRefRepoService;
+import com.bank.onboarding.commonslib.utils.kafka.EventSeDeserializer;
 import com.bank.onboarding.commonslib.utils.kafka.models.CreateAccountEvent;
 import com.bank.onboarding.commonslib.utils.kafka.models.CreateIntervenientEvent;
 import com.bank.onboarding.commonslib.utils.kafka.models.ErrorEvent;
-import com.bank.onboarding.commonslib.utils.kafka.EventSeDeserializer;
-import com.bank.onboarding.commonslib.utils.mappers.AccountMapper;
 import com.bank.onboarding.commonslib.web.dtos.account.AccountRefDTO;
 import com.bank.onboarding.commonslib.web.dtos.customer.CustomerRefDTO;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +24,6 @@ public class KafkaConsumer {
 
     private final EventSeDeserializer eventSeDeserializer;
     private final InterventionService interventionService;
-    private final AccountRefRepoService accountRefRepoService;
 
     @KafkaListener(topics = "${spring.kafka.consumer.topic-name}",  groupId = "${spring.kafka.consumer.group-id}")
     public void consumeEvent(ConsumerRecord event){
@@ -37,11 +34,6 @@ public class KafkaConsumer {
                 CreateAccountEvent createAccountEvent = (CreateAccountEvent) eventSeDeserializer.deserialize(eventValue, CreateAccountEvent.class);
                 log.info("Event received for customer number {}", Optional.ofNullable(createAccountEvent.getCustomerRefDTO()).map(CustomerRefDTO::getCustomerNumber).orElse(""));
                 interventionService.createInterventionForCreateAccountOperation(createAccountEvent, eventKey);
-            }
-            case "UPDATE_ACCOUNT_REF" -> {
-                AccountRefDTO accountRefDTO = (AccountRefDTO) eventSeDeserializer.deserialize(eventValue, AccountRefDTO.class);
-                log.info("Event received to update Account Ref with number {}", accountRefDTO.getAccountNumber());
-                accountRefRepoService.saveAccountRefDB(AccountMapper.INSTANCE.toAccountRef(accountRefDTO));
             }
             case "ADD_INTERVENIENT" -> {
                 CreateIntervenientEvent createIntervenientEvent = (CreateIntervenientEvent) eventSeDeserializer.deserialize(eventValue, CreateIntervenientEvent.class);
