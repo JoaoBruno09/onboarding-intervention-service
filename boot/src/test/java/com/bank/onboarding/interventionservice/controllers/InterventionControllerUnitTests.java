@@ -72,11 +72,11 @@ class InterventionControllerUnitTests {
 
     @Test
     void deleteInterventionTest() throws Exception{
-        mockMvc.perform(delete("/intervention/I123456789")
+        mockMvc.perform(delete("/interventions/I123456789")
                         .header("Authorization", "Bearer " + token)
                         .header("X-Onboarding-Client-Id", clientId)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 }

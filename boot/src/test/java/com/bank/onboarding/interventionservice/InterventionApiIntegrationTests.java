@@ -61,7 +61,7 @@ class InterventionApiIntegrationTests {
     }
 
     private String createURLWithPort() {
-        return "http://localhost:" + port + "/intervention/";
+        return "http://localhost:" + port + "/interventions/";
     }
 
     private String insertInterventionDB() {
@@ -80,7 +80,7 @@ class InterventionApiIntegrationTests {
         ResponseEntity<?> response = restTemplate.exchange(
                 createURLWithPort() + interventionId, HttpMethod.DELETE, entity, new ParameterizedTypeReference<>(){});
 
-        assertEquals(response.getStatusCode(), HttpStatusCode.valueOf(200));
+        assertEquals(response.getStatusCode(), HttpStatusCode.valueOf(204));
         assertTrue(interventionRepository.findById(interventionId).isEmpty());
     }
 }
