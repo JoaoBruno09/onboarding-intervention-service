@@ -10,7 +10,7 @@ The Intervention Service is a dedicated microservice responsible for managing cu
 - Independent persistence using the Database per Service pattern
 
 ## 🔗 API Endpoints
-- DELETE /interventions/{interventionId}
+- DELETE /interventions/{interventionId} - Delete interventions in the account
   
 ## 👨‍💻 Technologies
 
